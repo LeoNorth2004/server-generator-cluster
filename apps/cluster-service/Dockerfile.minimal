@@ -1,0 +1,6 @@
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates curl
+COPY cluster-service-linux /root/cluster-service
+WORKDIR /root/
+EXPOSE 8086
+CMD ["./cluster-service"]

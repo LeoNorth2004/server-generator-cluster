@@ -1,0 +1,183 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: generator-postgres-quick
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: generator_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: generator-redis-quick
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    image: generator-platform/api-gateway:latest
+    container_name: generator-api-gateway-quick
+    ports:
+      - "8080:8080"
+    environment:
+      API_GATEWAY_PORT: "8080"
+      USER_SERVICE_URL: http://user-service:8081
+      AUTH_SERVICE_URL: http://auth-service:8082
+      PROJECT_SERVICE_URL: http://project-service:8083
+      GENERATOR_SERVICE_URL: http://generator-service:8084
+      OPERATIONS_SERVICE_URL: http://operations-service:8085
+      CLUSTER_SERVICE_URL: http://cluster-service:8086
+      JWT_SECRET: generator-platform-secret-key-2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  auth-service:
+    image: generator-platform/auth-service:latest
+    container_name: generator-auth-service-quick
+    ports:
+      - "8082:8082"
+    environment:
+      AUTH_SERVICE_PORT: "8082"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: "123456"
+      DB_NAME: generator_platform
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      JWT_SECRET: generator-platform-secret-key-2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  user-service:
+    image: generator-platform/user-service:latest
+    container_name: generator-user-service-quick
+    ports:
+      - "8081:8081"
+    environment:
+      USER_SERVICE_PORT: "8081"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: "123456"
+      DB_NAME: generator_platform
+      JWT_SECRET: generator-platform-secret-key-2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  project-service:
+    image: generator-platform/project-service:latest
+    container_name: generator-project-service-quick
+    ports:
+      - "8083:8083"
+    environment:
+      PROJECT_SERVICE_PORT: "8083"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: "123456"
+      DB_NAME: generator_platform
+      JWT_SECRET: generator-platform-secret-key-2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  generator-service:
+    image: generator-platform/generator-service:latest
+    container_name: generator-generator-service-quick
+    ports:
+      - "8084:8084"
+    environment:
+      GENERATOR_SERVICE_PORT: "8084"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: "123456"
+      DB_NAME: generator_platform
+      JWT_SECRET: generator-platform-secret-key-2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  operations-service:
+    image: generator-platform/operations-service:latest
+    container_name: generator-operations-service-quick
+    ports:
+      - "8085:8085"
+    environment:
+      OPERATIONS_SERVICE_PORT: "8085"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: "123456"
+      DB_NAME: generator_platform
+      JWT_SECRET: generator-platform-secret-key-2024
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cluster-service:
+    image: generator-platform/cluster-service:latest
+    container_name: generator-cluster-service-quick
+    ports:
+      - "8086:8086"
+    environment:
+      CLUSTER_SERVICE_PORT: "8086"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: "123456"
+      DB_NAME: generator_platform
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web-admin:
+    build:
+      context: .
+      dockerfile: apps/web-admin/Dockerfile
+      args:
+        DEPLOY_MODE: docker
+    image: generator-platform/web-admin:latest
+    container_name: generator-web-admin-quick
+    ports:
+      - "3000:3000"
+    environment:
+      DEPLOY_MODE: docker
+    depends_on:
+      - api-gateway
+      - auth-service
+      - user-service
+      - project-service
+      - generator-service
+      - operations-service
+      - cluster-service
+
+volumes:
+  postgres_data:
+  redis_data:

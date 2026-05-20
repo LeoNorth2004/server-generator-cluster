@@ -1,0 +1,69 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+dist/
+dist-ssr/
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+/tmp/
+
+# Go specific
+*.test
+*.out
+go.work.sum
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Archives and packages
+*.tar.gz
+*.zip
+*.rar
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Docker
+.docker/
+
+# Testing
+coverage/
+*.cover
+*.prof
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.bak
+.cache/

@@ -1,0 +1,56 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: generator-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: generator-platform/auth-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          env:
+            - name: AUTH_SERVICE_PORT
+              value: "8082"
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "123456"
+            - name: DB_NAME
+              value: "generator_platform"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: JWT_SECRET
+              value: "generator-platform-secret-key-2024"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: generator-platform
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082

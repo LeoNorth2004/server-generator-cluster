@@ -1,0 +1,190 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: generator-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: generator_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - generator-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: generator-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - generator-network
+
+  api-gateway:
+    build:
+      context: ../..
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: generator-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+      - user-service
+      - auth-service
+      - project-service
+      - generator-service
+      - operations-service
+      - cluster-service
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      USER_SERVICE_URL: http://user-service:8081
+      AUTH_SERVICE_URL: http://auth-service:8082
+      PROJECT_SERVICE_URL: http://project-service:8083
+      GENERATOR_SERVICE_URL: http://generator-service:8084
+      OPERATIONS_SERVICE_URL: http://operations-service:8085
+      CLUSTER_SERVICE_URL: http://cluster-service:8086
+    env_file:
+      - ../../.env
+    networks:
+      - generator-network
+
+  user-service:
+    build:
+      context: ../..
+      dockerfile: apps/user-service/Dockerfile
+    container_name: generator-user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      USER_SERVICE_PORT: 8081
+    env_file:
+      - ../../.env
+    networks:
+      - generator-network
+
+  auth-service:
+    build:
+      context: ../..
+      dockerfile: apps/authentication-service/Dockerfile
+    container_name: generator-auth-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      AUTH_SERVICE_PORT: 8082
+    env_file:
+      - ../../.env
+    networks:
+      - generator-network
+
+  project-service:
+    build:
+      context: ../..
+      dockerfile: apps/project-service/Dockerfile
+    container_name: generator-project-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      PROJECT_SERVICE_PORT: 8083
+    env_file:
+      - ../../.env
+    networks:
+      - generator-network
+
+  generator-service:
+    build:
+      context: ../..
+      dockerfile: apps/generator-service/Dockerfile
+    container_name: generator-generator-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      GENERATOR_SERVICE_PORT: 8084
+    env_file:
+      - ../../.env
+    networks:
+      - generator-network
+
+  operations-service:
+    build:
+      context: ../..
+      dockerfile: apps/operations-service/Dockerfile
+    container_name: generator-operations-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      OPERATIONS_SERVICE_PORT: 8085
+    env_file:
+      - ../../.env
+    networks:
+      - generator-network
+
+  cluster-service:
+    build:
+      context: ../..
+      dockerfile: apps/cluster-service/Dockerfile
+    container_name: generator-cluster-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      CLUSTER_SERVICE_PORT: 8086
+    env_file:
+      - ../../.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - generator-network
+
+  web-admin:
+    build:
+      context: ../../apps/web-admin
+      dockerfile: Dockerfile
+    container_name: generator-web-admin
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - generator-network
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  generator-network:
+    driver: bridge

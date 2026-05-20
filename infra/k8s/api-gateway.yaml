@@ -1,0 +1,58 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: generator-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: generator-platform/api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_GATEWAY_PORT
+              value: "8080"
+            - name: JWT_SECRET
+              value: "generator-platform-secret-key-2024"
+            - name: JWT_EXPIRE
+              value: "24h"
+            - name: USER_SERVICE_URL
+              value: "http://user-service:8081"
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service:8082"
+            - name: PROJECT_SERVICE_URL
+              value: "http://project-service:8083"
+            - name: GENERATOR_SERVICE_URL
+              value: "http://generator-service:8084"
+            - name: OPERATIONS_SERVICE_URL
+              value: "http://operations-service:8085"
+            - name: CLUSTER_SERVICE_URL
+              value: "http://cluster-service:8086"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: generator-platform
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30081
+  type: NodePort
